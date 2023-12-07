@@ -48,6 +48,40 @@ def print_result(result: PoseLandmarkerResult, output_image: mp.Image, timestamp
     print(CalculateAngle(result))
     pass
 
+
+# Set up servo_pins
+servo_1 = int(10);
+servo_2 = int(11);
+
+# Set up GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(servo_1, GPIO.OUT)
+
+
+# Create PWM instance
+pwm = GPIO.PWM(servo_1, 50)  # 50 Hz frequency
+
+# Start PWM
+pwm.start(0)
+
+# Function to set servo angle
+def set_angle(angle):
+    duty = angle / 18 + 2
+    GPIO.output(servo_1, True)
+    pwm.ChangeDutyCycle(duty)
+    time.sleep(1)
+    GPIO.output(servo_1, False)
+    pwm.ChangeDutyCycle(0)
+
+# Move servo to specific angle
+set_angle(90)  # Move to 90 degrees
+
+# Clean up GPIO
+pwm.stop()
+GPIO.cleanup()
+
+
+
 model_file = open('pose_landmarker_full.task', 'rb')
 model_data = model_file.read()
 model_file.close()
