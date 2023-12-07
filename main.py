@@ -7,6 +7,7 @@ import mediapipe as mp
 from Angle import CalculateAngle
 
 
+ssh pi@<your_raspberry_pi_ip_address> # Modify here
 import RPi.GPIO as GPIO
 import time
 
