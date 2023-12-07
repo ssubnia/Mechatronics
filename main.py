@@ -6,6 +6,10 @@ import cv2
 import mediapipe as mp
 from Angle import CalculateAngle
 
+
+import RPi.GPIO as GPIO
+import time
+
 # To better demonstrate the Pose Landmarker API, we have created a set of visualization tools
 # that will be used in this colab. These will draw the landmarks on a detect person, as well as
 # the expected connections between those markers.
@@ -78,7 +82,7 @@ with PoseLandmarker.create_from_options(options) as landmarker:
             print(f"\nIgnoring empty camera frame\n")
             break
         
-        # Convert the frame received from OpenCV to a MediaPipe¡¯s Image object.
+        # Convert the frame received from OpenCV to a MediaPipeÂ¡Â¯s Image object.
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
         
         # Send live image data to perform pose landmarking.
