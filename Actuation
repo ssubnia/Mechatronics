@@ -1,0 +1,148 @@
+# ssh pi@<your_raspberry_pi_ip_address> 
+import RPi.GPIO as GPIO
+import time
+import numpy as np 
+
+class TurtleNeckDetector:
+    def __init__(self):
+        self.calculated_angle = 0
+        self.count = 0
+        self.detected = False  # Flag to indicate if detector is started
+        self.start_time = 0
+
+        self.turtle_neck_threshold = 70 # Threshold for turtleneck recognition
+        self.count_threshold = 30  # Threshold for count
+        self.time_limit = 180  # 3 minutes time limit
+        
+    def detect_turtle_neck(self, calculated_angle):
+        if not self.detected:
+            self.start_time = time.time()
+            self.detected = True
+        
+        if self.detected and not self.count >= self.count_threshold:
+            if calculated_angle <= self.turtle_neck_threshold :
+                self.count += 1
+            else:
+                self.count = 0
+        
+        if self.count >= self.count_threshold and time.time() - self.start_time <= self.time_limit:
+            print("Turtle neck detected!")
+            return True
+        else:
+            print("Turtle neck not detected.")
+            pass
+
+
+
+############################################
+###  Set the optimum angle for mapping   ###
+############################################
+global optimum_theta_c = 70
+global optimum_theta_s = 15
+
+
+
+class PostureMapping: 
+    def __init__(self) -> None:
+
+        # Set up servo_pins
+        self.servo_1 = int(10);
+        self.servo_2 = int(11);
+        self.servo_3 = int(12);
+        self.servo_4 = int(13);
+        
+        # Set up GPIO
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(servo_1, GPIO.OUT)a
+        GPIO.setup(servo_2, GPIO.OUT)
+        GPIO.setup(servo_3, GPIO.OUT)                           
+        GPIO.setup(servo_4, GPIO.OUT)
+
+        # Create PWM instances as class attributes
+        self.pwm_1 = GPIO.PWM(self.servo_1, 50)  # 50 Hz frequency
+        self.pwm_2 = GPIO.PWM(self.servo_2, 50)
+        self.pwm_3 = GPIO.PWM(self.servo_3, 50)
+        self.pwm_4 = GPIO.PWM(self.servo_4, 50)
+
+        # Start PWM
+        self.pwm_1.start(0)
+        self.pwm_2.start(0)
+        self.pwm_3.start(0)
+        self.pwm_4.start(0)
+    
+
+    # Controlling two bottom servo at once 
+    def set_angle_1(angle):
+        duty1 = angle / 18 + 2          # Change this angle value as needed.
+        duty2 = (180-angle) / 18 + 2    # Change this angle value as needed.
+        GPIO.output(servo_1, True)
+        GPIO.output(servo_2, True)
+        self.pwm1.ChangeDutyCycle(duty)
+        self.pwm2.ChangeDutyCycle(duty)
+        time.sleep(1)                   # Change this delay as needed. 
+        GPIO.output(servo_1, False)
+        GPIO.output(servo_2, False)
+        self.pwm1.ChangeDutyCycle(0)
+        self.pwm2.ChangeDutyCycle(duty)
+    
+    def set_angle_2(angle):
+        duty3 = angle / 18 + 2          # Change this angle value as needed.
+        duty4 = (180-angle) / 18 + 2    # Change this angle value as needed.
+        GPIO.output(servo_3, True)
+        GPIO.output(servo_4, True)
+        self.pwm3.ChangeDutyCycle(duty)
+        self.pwm4.ChangeDutyCycle(duty)
+        time.sleep(1)                   # Change this delay as needed.
+        GPIO.output(servo_3, False)
+        GPIO.output(servo_4, False)
+        self.pwm3.ChangeDutyCycle(0)
+        self.pwm4.ChangeDutyCycle(duty)
+
+    # Mapping Laptop to the optimum posture
+    def Laptop(self, calculated_angle, epsilon=1e-1, maxIters=30):
+        global optimum_theta_c  
+
+        # Initialize Angle1 and Angle2
+        angle_1 = 0
+        angle_2 = 0
+
+        # Change Angle1 and then Angle2
+        for i in range(maxIters):
+            
+            self.set_angle_1(angle_1)
+            angle_1 = angle_1 + 5          # The amount of angle1 change is 5 degree.
+
+            # Checking the current state
+            tolerance = optimum_theta_c - calculated_angle
+            tolerance = tolerance * np.sign(tolerance)         # Changing the sign of tolerance
+            if tolerance < epsilon:
+                break
+        
+        for i in range(maxIters):
+
+            self.set_angle_2(angle_2)
+            angle_1 = angle_1 + 1          # The amount of angle2 change is 1 degree.
+
+            # Checking the current state
+            tolerance = optimum_theta_c - calculated_angle
+            tolerance = tolerance * np.sign(tolerance)          # Changing the sign of tolerance
+            if tolerance < epsilon:
+                break
+
+        # Clean up GPIO to reduce the load of the board.
+        self.pwm_1.stop()
+        self.pwm_2.stop()
+        self.pwm_3.stop()
+        self.pwm_4.stop()
+
+        GPIO.cleanup()
+        return "finnished"
+       
+
+    # Mapping iPad to the optimum posture
+    def iPad(self): 
+        pass
+        
+            
+
+    
