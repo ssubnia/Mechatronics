@@ -7,9 +7,11 @@ import mediapipe as mp
 from Angle import CalculateAngle
 
 
-ssh pi@<your_raspberry_pi_ip_address> # Modify here
-import RPi.GPIO as GPIO
-import time
+'''
+from Actuation import TurtleNeckDetector, PostureMapping
+'''
+
+
 
 # To better demonstrate the Pose Landmarker API, we have created a set of visualization tools
 # that will be used in this colab. These will draw the landmarks on a detect person, as well as
@@ -47,39 +49,9 @@ def print_result(result: PoseLandmarkerResult, output_image: mp.Image, timestamp
     cv2.imshow('result', annotated_image)
     cv2.waitKey(33)
     print(CalculateAngle(result))
+    calculated_angle = CalculateAngle(result)  # Get the angle calculated from landmarks
+    return calculated_angle
     pass
-
-
-# Set up servo_pins
-servo_1 = int(10);
-servo_2 = int(11);
-
-# Set up GPIO
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(servo_1, GPIO.OUT)
-
-
-# Create PWM instance
-pwm = GPIO.PWM(servo_1, 50)  # 50 Hz frequency
-
-# Start PWM
-pwm.start(0)
-
-# Function to set servo angle
-def set_angle(angle):
-    duty = angle / 18 + 2
-    GPIO.output(servo_1, True)
-    pwm.ChangeDutyCycle(duty)
-    time.sleep(1)
-    GPIO.output(servo_1, False)
-    pwm.ChangeDutyCycle(0)
-
-# Move servo to specific angle
-set_angle(90)  # Move to 90 degrees
-
-# Clean up GPIO
-pwm.stop()
-GPIO.cleanup()
 
 
 
@@ -102,7 +74,6 @@ cap = cv2.VideoCapture(path)
 # original_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 # output_height = 720
 # output_width = int(output_height*original_width//original_height)
-
 # Define the codec and create VideoWriter Object
 # fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 # out = cv2.VideoWriter('result.mp4', fourcc, fps, (output_width, output_height))
@@ -110,6 +81,14 @@ cap = cv2.VideoCapture(path)
 with PoseLandmarker.create_from_options(options) as landmarker:
     # The landmarker is initialized. Use it here.
     timestamp = 0
+    
+    '''
+    reset_detector = False  # Flag to indicate if detector is reset
+    
+    # Initiating 
+    detector = TurtleNeckDetector.detect_turtle_neck()
+    '''
+
     while cap.isOpened():
         ret, image = cap.read()
         if not ret:
@@ -124,8 +103,24 @@ with PoseLandmarker.create_from_options(options) as landmarker:
         # The results are accessible via the `result_callback` provided in
         # the `PoseLandmarkerOptions` object.
         # The pose landmarker must be created with the live stream mode.
+       
         try:
-            landmarker.detect_async(mp_image, timestamp)
+            calculated_angle = landmarker.detect_async(mp_image, timestamp)
+
+            """ 
+            if not reset_detector:
+                if detector.detect_turtle_neck(timestamp, calculated_angle):
+                    reset_detector = True                                       # Set flag to True after detecting turtle neck
+                    detector = TurtleNeckDetector.detect_turtle_neck()          # Reset the detector
+
+            # If detector is resetted, Actuation starts.
+            if reset_detector:
+                PostureMapping.Laptop(calculated_angle)
+                pass
+        
+            """
+            
+
         except:
             print('failed to detect')
         
